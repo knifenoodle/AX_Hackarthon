@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoC 분류 인사이트 리포트</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root {
+  /* ── Brand · CarbonLink Green (메인 컬러) ── */
+  --green: #129E7B;
+  --green-strong: #0E7D62;
+  --green-tint: #EDFCF6;
+  --green-tint-2: #DCF3EA;
+  --green-tint-3: #E4F5EE;
+  /* ── Neutrals (배경 · 무채색) ── */
+  --bg: #F7F8F9;
+  --surface: #FFFFFF;
+  --fill: #F1F3F5;
+  --fill-2: #EDEFF2;
+  --fill-soft: #FAFBFB;
+  --border: #E7EAEC;
+  --neutral: #B4BCC5;
+  --ink: #1F2937;
+  --ink-2: #374151;
+  --text-2: #5B6472;
+  --text-3: #4B5563;
+  --muted: #8A93A0;
+  --dash: #C7CDD3;
+  /* ── Info · 채도 낮춘 슬레이트 (기능요청 등 유형 구분) ── */
+  --slate: #5B6B7B;
+  --slate-2: #64748B;
+  --slate-strong: #475569;
+  --slate-tint: #E7EBF1;
+  --slate-tint-2: #ECEFF2;
+  /* ── Point · 강조 최소 (포인트 컬러) ── */
+  --red: #E5484D;
+  --red-strong: #C43C41;
+  --red-tint: #FDECEC;
+  --red-tint-soft: #FEF5F5;
+  --amber: #E8912D;
+  --amber-strong: #B26A0F;
+  --amber-tint: #FBEFD9;
+  /* ── Shape · 카드 라운드/그림자 ── */
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow: 0 1px 2px rgba(16,24,40,.04), 0 8px 24px rgba(16,24,40,.05);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif; background: var(--bg); color: var(--ink); line-height: 1.65; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.container { max-width: 1080px; margin: 0 auto; padding: 56px 28px; }
+
+/* Header */
+.header { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--green); border-radius: var(--radius); padding: 34px 40px; margin-bottom: 28px; box-shadow: var(--shadow); }
+.header h1 { font-size: 24px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 12px; }
+.header-meta { font-size: 13px; color: var(--text-2); display: flex; flex-wrap: wrap; gap: 18px; }
+
+/* Section */
+.section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 36px; margin-bottom: 28px; box-shadow: var(--shadow); }
+.section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; padding-bottom: 16px; margin-bottom: 24px; border-bottom: 1px solid var(--border); }
+
+/* Bar chart */
+.bar-row { margin-bottom: 14px; }
+.bar-meta { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; font-weight: 500; }
+.bar-track { background: var(--fill-2); border-radius: 8px; height: 28px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 8px; display: flex; align-items: center; padding-left: 12px; color: white; font-size: 12px; font-weight: 700; letter-spacing: .3px; min-width: 52px; }
+.bar-fill.lt { background: var(--neutral); color: var(--ink-2); }
+
+/* Extra metric chips */
+.mini-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 22px; }
+.mini { flex: 1; min-width: 140px; background: var(--fill); border-radius: var(--radius-sm); padding: 14px 18px; border-left: 3px solid var(--neutral); }
+.mini b { font-size: 20px; }
+.mini span { font-size: 12px; color: var(--text-2); display: block; }
+.mini.u { border-color: var(--red); } .mini.u b { color: var(--red); }
+.mini.q { border-color: var(--amber); } .mini.q b { color: var(--amber-strong); }
+
+/* Filter */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.f-btn { padding: 5px 14px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--surface); color: var(--text-3); transition: all .15s; }
+.f-btn:hover { border-color: var(--neutral); }
+.f-btn.on { background: var(--ink); color: white; border-color: var(--ink); }
+
+/* 더보기 */
+.more-wrap { text-align: center; margin-top: 16px; }
+.more-btn { padding: 8px 22px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 12.5px; font-weight: 600; cursor: pointer; background: var(--surface); color: var(--text-2); transition: all .15s; }
+.more-btn:hover { border-color: var(--neutral); background: var(--fill); }
+
+/* Table */
+.tbl-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--fill); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-2); padding: 12px 14px; text-align: left; border-bottom: 2px solid var(--border); white-space: nowrap; }
+tbody td { padding: 11px 14px; border-bottom: 1px solid var(--fill-2); vertical-align: middle; }
+tbody tr:hover { background: var(--fill-soft); }
+tbody tr:last-child td { border-bottom: none; }
+#vt tbody td:first-child { font-family: 'SF Mono', Menlo, monospace; font-size: 12px; color: var(--muted); }
+
+/* Badges */
+.badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 5px; white-space: nowrap; }
+.b-불만 { background: var(--red-tint); color: var(--red-strong); }
+.b-기능요청 { background: var(--slate-tint); color: var(--slate-strong); }
+.b-칭찬 { background: var(--green-tint-2); color: var(--green-strong); }
+.b-일반문의 { background: var(--fill); color: var(--text-3); }
+.ct { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.ct-oem { background: var(--amber-tint); color: var(--amber-strong); font-weight: 700; }
+.ct-1 { background: var(--slate-tint); color: var(--slate-strong); }
+.ct-2 { background: var(--slate-tint-2); color: var(--slate-2); }
+.ct-etc { background: var(--fill); color: var(--text-2); }
+
+/* Secondary chips */
+.sub { display:inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 4px; white-space: nowrap; }
+.sub-b { background: var(--red-tint); color: var(--red-strong); }
+.sub-f { background: var(--slate-tint); color: var(--slate-strong); }
+.sub-na { background: var(--fill); color: var(--muted); font-style: italic; }
+.mq { display:inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: var(--amber-tint); color: var(--amber-strong); white-space: nowrap; }
+.urg { display:inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: var(--red-tint); color: var(--red-strong); white-space: nowrap; }
+.dash { color: var(--dash); }
+
+/* Insights */
+.insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.insight-card { border-radius: 14px; padding: 22px 24px; border: 1px solid var(--border); }
+.i-num { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.i-title { font-size: 13px; font-weight: 700; line-height: 1.5; margin-bottom: 12px; }
+.i-section { margin-bottom: 10px; }
+.i-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 3px; }
+.i-section-body { font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+
+/* ===== 주간 리포트 ===== */
+.section-note { font-size: 12px; color: var(--text-2); line-height: 1.7; margin-top: 18px; padding: 14px 16px; background: var(--fill); border-radius: 10px; border-left: 3px solid var(--neutral); }
+.section-note b { color: var(--text-3); }
+
+/* KPI cards */
+.kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+.kpi { border-radius: var(--radius-sm); padding: 18px 16px; border: 1px solid var(--border); border-top: 3px solid var(--neutral); background: var(--fill-soft); text-align: center; }
+.kpi.total { border-top-color: var(--ink); }
+.kpi.ask   { border-top-color: var(--neutral); }
+.kpi.feat  { border-top-color: var(--slate); }
+.kpi.praise{ border-top-color: var(--green); }
+.kpi.compl { border-top-color: var(--red); }
+.kpi-label { font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 8px; }
+.kpi-val { font-size: 26px; font-weight: 700; line-height: 1.1; }
+.kpi-val span { font-size: 13px; font-weight: 600; color: var(--muted); }
+.kpi-delta { font-size: 12px; font-weight: 700; margin-top: 6px; }
+.up   { color: var(--amber-strong); }
+.down { color: var(--green); }
+.flat { color: var(--neutral); }
+
+/* 해결율 */
+.res-wrap { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
+.res-figure { flex: 0 0 auto; text-align: center; }
+.res-pct { font-size: 40px; font-weight: 800; color: var(--green); line-height: 1; }
+.res-cap { font-size: 12px; color: var(--text-2); margin-top: 4px; }
+.res-bar-area { flex: 1; min-width: 240px; }
+.res-bar { display: flex; height: 30px; border-radius: 6px; overflow: hidden; background: var(--fill-2); }
+.res-seg { height: 100%; display: flex; align-items: center; padding: 0 12px; color: #fff; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.res-done { background: var(--green); }
+.res-prog { background: var(--amber); }
+.res-legend { display: flex; gap: 18px; margin-top: 10px; font-size: 12px; color: var(--text-3); }
+.res-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.res-wow { font-size: 13px; margin-top: 10px; color: var(--text-3); }
+.res-sub-title { font-size: 13px; font-weight: 700; color: var(--text-3); margin: 24px 0 12px; }
+.res-type-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.res-frac { font-size: 12px; color: var(--text-2); font-weight: 600; margin-top: 6px; }
+
+/* 주간 표 보조 */
+td.rank { font-weight: 700; color: var(--ink); text-align: center; }
+td.cnt { font-weight: 700; text-align: center; }
+.mid { display:inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: var(--amber-tint); color: var(--amber-strong); white-space: nowrap; }
+.idref { font-size: 11px; color: var(--text-2); font-family: 'SF Mono', Menlo, monospace; }
+
+/* 규제 패턴 카드 */
+.pat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.pat-card { border-radius: 14px; padding: 20px 22px; border: 1px solid var(--border); border-left: 4px solid var(--neutral); }
+.pat-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .5px; padding: 2px 8px; border-radius: 4px; background: var(--border); color: var(--text-3); margin-bottom: 8px; }
+.pat-title { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+.pat-body { font-size: 12px; color: var(--ink-2); line-height: 1.6; }
+
+/* ===== 제품 개선 기획안 ===== */
+.lead { font-size: 13px; color: var(--text-3); line-height: 1.7; margin-bottom: 20px; }
+
+/* 3축 배점 카드 */
+.axis-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.axis-card { border-radius: 14px; padding: 20px 22px; border: 1px solid var(--border); border-top: 3px solid var(--neutral); background: var(--fill-soft); }
+.axis-card.a1 { border-top-color: var(--slate); }
+.axis-card.a2 { border-top-color: var(--red); }
+.axis-card.a3 { border-top-color: var(--green); }
+.axis-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.axis-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.axis-pts { font-size: 26px; font-weight: 800; line-height: 1; }
+.axis-pts span { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 1px; }
+.axis-card.a1 .axis-pts { color: var(--slate); }
+.axis-card.a2 .axis-pts { color: var(--red); }
+.axis-card.a3 .axis-pts { color: var(--green); }
+.axis-name { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+.axis-desc { font-size: 12px; color: var(--text-3); line-height: 1.55; margin-bottom: 10px; }
+.axis-goal { font-size: 11px; font-weight: 700; color: var(--text-3); background: var(--fill-2); border-radius: 5px; padding: 4px 9px; display: inline-block; }
+
+/* 채점 규칙 */
+.scoring { border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; margin-top: 20px; background: var(--fill-soft); }
+.scoring-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 12px; }
+.scoring-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 9px; }
+.scoring-row:last-child { margin-bottom: 0; }
+.sc-axis { flex: 0 0 auto; font-size: 10.5px; font-weight: 700; padding: 3px 8px; border-radius: 4px; white-space: nowrap; margin-top: 1px; }
+.sc-axis.a1 { background: var(--slate-tint); color: var(--slate-strong); }
+.sc-axis.a2 { background: var(--red-tint); color: var(--red-strong); }
+.sc-axis.a3 { background: var(--green-tint-2); color: var(--green-strong); }
+.sc-rule { font-size: 12px; color: var(--text-3); line-height: 1.6; }
+.sc-rule b { color: var(--ink); }
+.tier-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 16px; font-size: 12.5px; color: var(--text-3); align-items: center; }
+.tier-row .tier-item { display: inline-flex; align-items: center; gap: 7px; }
+
+/* 티어 배지 */
+.b-p0 { background: var(--red-tint); color: var(--red-strong); }
+.b-p1 { background: var(--amber-tint); color: var(--amber-strong); }
+.b-p2 { background: var(--border); color: var(--text-3); }
+
+/* 랭킹표 */
+td.ax { text-align: center; font-weight: 600; color: var(--text-3); }
+td.rank-total { min-width: 108px; }
+.rt-num { font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+.rt-track { background: var(--fill-2); border-radius: 3px; height: 6px; overflow: hidden; }
+.rt-fill { height: 100%; border-radius: 3px; }
+tr.picked { background: var(--green-tint); }
+tr.picked:hover { background: var(--green-tint-3); }
+.adopt { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 5px; background: var(--green-tint-2); color: var(--green-strong); white-space: nowrap; }
+.route { font-size: 12px; color: var(--text-2); }
+
+/* 기획안 카드 */
+.proposal { border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 24px; overflow: hidden; }
+.proposal:last-child { margin-bottom: 0; }
+.proposal-head { padding: 22px 26px; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; flex-wrap: wrap; border-bottom: 1px solid var(--border); }
+.proposal-head.p0 { background: var(--red-tint-soft); }
+.prop-meta { flex: 1; min-width: 240px; }
+.prop-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+.prop-title { font-size: 16px; font-weight: 800; margin-bottom: 6px; line-height: 1.4; }
+.prop-sub { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+.pb { display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: var(--radius-sm); padding: 10px 18px; min-width: 92px; text-align: center; }
+.pb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+.pb-tier { font-size: 22px; font-weight: 900; line-height: 1; }
+.pb-score { font-size: 11px; font-weight: 700; margin-top: 3px; }
+.pb-p0 { background: var(--red-tint); color: var(--red-strong); }
+.proposal-body { padding: 24px 26px 26px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.prop-col { display: flex; flex-direction: column; gap: 14px; }
+.prop-block { background: var(--fill); border-radius: var(--radius-sm); padding: 17px 18px; }
+.prop-block-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-bottom: 9px; }
+.prop-block-body { font-size: 12.5px; color: var(--ink-2); line-height: 1.65; }
+.prop-block-body b { color: var(--ink); }
+.prop-steps { list-style: none; margin: 0; padding: 0; }
+.prop-steps li { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; padding: 3px 0 3px 22px; position: relative; }
+.prop-steps li .n { position: absolute; left: 0; top: 3px; font-size: 11px; font-weight: 700; color: var(--slate); }
+
+/* 근거 VoC */
+.voc-item { background: var(--surface); border-left: 3px solid var(--slate); border-radius: 0 6px 6px 0; padding: 8px 11px; margin-bottom: 6px; font-size: 12px; line-height: 1.5; }
+.voc-item:last-child { margin-bottom: 0; }
+.voc-item .vid { font-weight: 700; color: var(--slate); margin-right: 5px; font-family: 'SF Mono', Menlo, monospace; font-size: 11px; }
+.voc-item.urg-i { border-left-color: var(--red); }
+.voc-item.urg-i .vid { color: var(--red); }
+.voc-item.roi-i { border-left-color: var(--green); }
+.voc-item.roi-i .vid { color: var(--green); }
+.sig { display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; white-space: nowrap; margin: 0 2px; vertical-align: middle; }
+.sig-urg { background: var(--red-tint); color: var(--red-strong); }
+.sig-comp { background: var(--red-tint); color: var(--red-strong); }
+.sig-re { background: var(--amber-tint); color: var(--amber-strong); }
+.sig-roi { background: var(--green-tint-2); color: var(--green-strong); }
+.voc-cluster { font-size: 11px; color: var(--text-2); line-height: 1.6; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+
+/* 점수 막대 (기획안 카드) */
+.score-breakdown { display: flex; flex-direction: column; gap: 9px; }
+.score-row { display: flex; align-items: center; font-size: 12px; }
+.score-label { flex: 0 0 108px; color: var(--text-3); }
+.score-bar-track { background: var(--border); border-radius: 3px; height: 8px; flex: 1; margin: 0 10px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 3px; }
+.score-val { font-weight: 700; font-size: 12px; color: var(--ink-2); flex: 0 0 46px; text-align: right; }
+.score-row.total { font-weight: 800; font-size: 13px; margin-top: 3px; padding-top: 9px; border-top: 1px dashed var(--border); }
+.score-row.total .score-label { color: var(--ink); }
+.score-row.total .score-val { font-size: 13px; }
+
+@media(max-width:700px) {
+  .insight-grid { grid-template-columns: 1fr; }
+  .axis-grid { grid-template-columns: 1fr; }
+  .proposal-body { grid-template-columns: 1fr; }
+}
+@media(max-width:820px) {
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .res-type-row { grid-template-columns: repeat(2, 1fr); }
+  .pat-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>VoC 분류 인사이트 리포트</h1>
+  <div class="header-meta">
+    <span>분석 기간: 2026-05-02 ~ 2026-06-14</span>
+    <span>원본 45건 → 중복 제거 후 <strong>44건</strong></span>
+    <span>작성: 송원우 · 2026-07-01</span>
+  </div>
+</div>
+
+<!-- Bar chart -->
+<div class="section">
+  <div class="section-title">유형별 분포 (전체 44건)</div>
+  <div class="bar-row">
+    <div class="bar-meta"><span>일반 문의</span><span>17건</span></div>
+    <div class="bar-track"><div class="bar-fill lt" style="width:38.6%">38.6%</div></div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-meta"><span>기능 요청</span><span>12건</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:27.3%;background:var(--slate)">27.3%</div></div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-meta"><span>칭찬</span><span>8건</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:18.2%;background:var(--green)">18.2%</div></div>
+  </div>
+  <div class="bar-row">
+    <div class="bar-meta"><span>불만</span><span>7건</span></div>
+    <div class="bar-track"><div class="bar-fill" style="width:15.9%;background:var(--red)">15.9%</div></div>
+  </div>
+
+  <div class="mini-row">
+    <div class="mini u"><b>4건</b><span>긴급 대응 (003·010·026·045)</span></div>
+    <div class="mini q"><b>3건</b><span>다중 질문 (016·025·040)</span></div>
+    <div class="mini"><b>7건</b><span>부가 신호 태깅 (한 건에 함께 담긴 다른 의견 보존)</span></div>
+  </div>
+</div>
+
+<!-- Classification table -->
+<div class="section">
+  <div class="section-title">VoC 유형별 분류표 (44건)</div>
+  <div class="filter-row">
+    <button class="f-btn on" onclick="ft('all',this)">전체 (44)</button>
+    <button class="f-btn" onclick="ft('불만',this)">불만 (7)</button>
+    <button class="f-btn" onclick="ft('기능 요청',this)">기능 요청 (12)</button>
+    <button class="f-btn" onclick="ft('칭찬',this)">칭찬 (8)</button>
+    <button class="f-btn" onclick="ft('일반 문의',this)">일반 문의 (17)</button>
+    <button class="f-btn" onclick="ft('urg',this)">긴급 (4)</button>
+    <button class="f-btn" onclick="ft('mq',this)">다중질문 (3)</button>
+  </div>
+  <div class="tbl-wrap">
+  <table id="vt">
+    <thead><tr><th>id</th><th>date</th><th>customer_type</th><th>content 요약</th><th>유형</th><th>부가 신호</th></tr></thead>
+    <tbody>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>001</td><td>2026-05-02</td><td><span class="ct ct-1">1차 협력사</span></td><td>CBAM 첫 신고 기한 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>002</td><td>2026-05-03</td><td><span class="ct ct-etc">기타</span></td><td>Scope2 계산기준 변경 이유 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="sub sub-b">불만·계산변동</span></td></tr>
+      <tr data-t="불만" data-urg="1" data-mq="0"><td>003</td><td>2026-05-04</td><td><span class="ct ct-2">2차 협력사</span></td><td>로그인 불가·업무 마비</td><td><span class="badge b-불만">불만</span></td><td><span class="urg">긴급</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>004</td><td>2026-05-05</td><td><span class="ct ct-etc">기타</span></td><td>CSRD 보고서 검토 지원 감사</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>005</td><td>2026-05-06</td><td><span class="ct ct-etc">기타</span></td><td>Scope3 금융 특화 가이드 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="sub sub-b">불만·계산복잡</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>006</td><td>2026-05-07</td><td><span class="ct ct-1">1차 협력사</span></td><td>CBAM 인증서 단계별 가이드 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>007</td><td>2026-05-08</td><td><span class="ct ct-etc">기타</span></td><td>공공기관 탄소중립 기준 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="불만" data-urg="0" data-mq="0"><td>008</td><td>2026-05-09</td><td><span class="ct ct-oem">OEM</span></td><td>협력사 200개 수동입력 불편</td><td><span class="badge b-불만">불만</span></td><td><span class="sub sub-f">기능·대량입력</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>009</td><td>2026-05-10</td><td><span class="ct ct-etc">기타</span></td><td>PCF 국내 LCA DB 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="불만" data-urg="1" data-mq="0"><td>010</td><td>2026-05-11</td><td><span class="ct ct-oem">OEM</span></td><td>CBAM 보고서 EU세관 반려</td><td><span class="badge b-불만">불만</span></td><td><span class="urg">긴급</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>011</td><td>2026-05-12</td><td><span class="ct ct-etc">기타</span></td><td>ESG 포트폴리오 관리 기능 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>012</td><td>2026-05-13</td><td><span class="ct ct-1">1차 협력사</span></td><td>온보딩 담당자 친절 감사</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>013</td><td>2026-05-14</td><td><span class="ct ct-etc">기타</span></td><td>CSRD 이중중요성 지원 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="sub sub-b">불만·컨설팅비용</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>014</td><td>2026-05-15</td><td><span class="ct ct-2">2차 협력사</span></td><td>계산 20% 차이 근거 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="sub sub-b">불만·정확도</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>015</td><td>2026-05-16</td><td><span class="ct ct-etc">기타</span></td><td>제3자 검증 인증기관 목록 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="1"><td>016</td><td>2026-05-17</td><td><span class="ct ct-1">1차 협력사</span></td><td>CBAM 인증서 구매의무·비용 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="mq">질문 2</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>017</td><td>2026-05-18</td><td><span class="ct ct-etc">기타</span></td><td>UI 개선 사용성 향상 칭찬</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>018</td><td>2026-05-19</td><td><span class="ct ct-etc">기타</span></td><td>협력사 데이터 일괄발송 기능 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="불만" data-urg="0" data-mq="0"><td>019</td><td>2026-05-20</td><td><span class="ct ct-2">2차 협력사</span></td><td>Scope1 GWP 미반영 계산 오류</td><td><span class="badge b-불만">불만</span></td><td><span class="sub sub-f">기능·GWP갱신</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>020</td><td>2026-05-21</td><td><span class="ct ct-1">1차 협력사</span></td><td>탄소 감축 로드맵 컨설팅 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>021</td><td>2026-05-22</td><td><span class="ct ct-etc">기타</span></td><td>CS 신속 이슈 해결 칭찬</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>022</td><td>2026-05-23</td><td><span class="ct ct-etc">기타</span></td><td>TCFD·CSRD 이중보고 통합 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>023</td><td>2026-05-24</td><td><span class="ct ct-1">1차 협력사</span></td><td>CBAM 협력사 공문 템플릿 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>024</td><td>2026-05-25</td><td><span class="ct ct-etc">기타</span></td><td>집계 오류 감소·보고서 품질 향상</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="1"><td>025</td><td>2026-05-26</td><td><span class="ct ct-oem">OEM</span></td><td>CBAM 내재량 제출 형식·양식 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="mq">질문 2</span></td></tr>
+      <tr data-t="불만" data-urg="1" data-mq="0"><td>026</td><td>2026-05-27</td><td><span class="ct ct-etc">기타</span></td><td>API·ERP 연동 반복 끊김</td><td><span class="badge b-불만">불만</span></td><td><span class="urg">긴급</span></td></tr>
+      <tr data-t="불만" data-urg="0" data-mq="0"><td>027</td><td>2026-05-28</td><td><span class="ct ct-1">1차 협력사</span></td><td>ISO14064 데이터 내보내기 오류</td><td><span class="badge b-불만">불만</span></td><td><span class="sub sub-f">기능·ISO양식</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>028</td><td>2026-05-29</td><td><span class="ct ct-etc">기타</span></td><td>탄소중립 로드맵 실무 활용 칭찬</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>029</td><td>2026-05-30</td><td><span class="ct ct-oem">OEM</span></td><td>연도별 배출량 비교 차트 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>030</td><td>2026-05-31</td><td><span class="ct ct-etc">기타</span></td><td>CSRD 감사법인 해석차 공식입장 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="sub sub-b">불만·해석혼란</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>032</td><td>2026-06-01</td><td><span class="ct ct-1">1차 협력사</span></td><td>CBAM 담당자 권한이전 절차 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="sub sub-na">채널결측</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>033</td><td>2026-06-02</td><td><span class="ct ct-etc">기타</span></td><td>Scope3 경쟁사 30% 차이 로직 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="sub sub-b">불만·정확도</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>034</td><td>2026-06-03</td><td><span class="ct ct-2">2차 협력사</span></td><td>공급망 자동화 업무 50% 단축 만족</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>035</td><td>2026-06-04</td><td><span class="ct ct-etc">기타</span></td><td>탄소크레딧·Scope3 구분표시 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="sub sub-na">채널결측</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>036</td><td>2026-06-05</td><td><span class="ct ct-etc">기타</span></td><td>CBAM 공공조달 탄소비용 영향 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>037</td><td>2026-06-06</td><td><span class="ct ct-1">1차 협력사</span></td><td>분기별 보고서 자동생성 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="불만" data-urg="0" data-mq="0"><td>038</td><td>2026-06-07</td><td><span class="ct ct-etc">기타</span></td><td>모바일 앱 부재 불편</td><td><span class="badge b-불만">불만</span></td><td><span class="sub sub-f">기능·모바일앱</span></td></tr>
+      <tr data-t="칭찬" data-urg="0" data-mq="0"><td>039</td><td>2026-05-09</td><td><span class="ct ct-2">2차 협력사</span></td><td>탄소배출 15% 감소·분석 기여 감사</td><td><span class="badge b-칭찬">칭찬</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="1"><td>040</td><td>2026-06-09</td><td><span class="ct ct-etc">기타</span></td><td>녹색채권 검증요건·ICMA 연계 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="mq">질문 2</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>041</td><td>2026-06-10</td><td><span class="ct ct-oem">OEM</span></td><td>CBAM 인증서 ETS 단가 추산 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>042</td><td>2026-06-11</td><td><span class="ct ct-etc">기타</span></td><td>SBTi 시나리오 분석 가능여부 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="기능 요청" data-urg="0" data-mq="0"><td>043</td><td>2026-06-12</td><td><span class="ct ct-1">1차 협력사</span></td><td>보고서 커스터마이징 개선 요청</td><td><span class="badge b-기능요청">기능 요청</span></td><td><span class="sub sub-b">불만·커스터마이징</span></td></tr>
+      <tr data-t="일반 문의" data-urg="0" data-mq="0"><td>044</td><td>2026-06-13</td><td><span class="ct ct-etc">기타</span></td><td>국내외 탄소크레딧 인정범위 문의</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="dash">—</span></td></tr>
+      <tr data-t="일반 문의" data-urg="1" data-mq="0"><td>045</td><td>2026-06-14</td><td><span class="ct ct-oem">OEM</span></td><td>CBAM 마감초과 연장·세관문의 방법</td><td><span class="badge b-일반문의">일반 문의</span></td><td><span class="urg">긴급</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="more-wrap">
+    <button id="moreBtn" class="more-btn" onclick="toggleMore()">더보기</button>
+  </div>
+</div>
+
+<!-- Insights -->
+<div class="section">
+  <div class="section-title">탄소규제 맥락 인사이트 3개</div>
+  <div class="insight-grid">
+    <div class="insight-card" style="border-left:4px solid var(--red)">
+      <div class="i-num" style="color:var(--red)">인사이트 01</div>
+      <div class="i-title">CBAM 확정 시행이 VoC 최대 동인 — 신고 실무 문의가 OEM·1차 협력사에 집중, 일부 고위험</div>
+      <div class="i-section"><div class="i-section-label">근거</div><div class="i-section-body">CBAM 관련 VoC 10건(전체의 22.7%) 중 9건이 OEM·1차 협력사. 010(EU세관 반려)·045(마감 초과·수출계약 위험)는 긴급·고위험. 최초 기한 문의(001)가 재유입(031 중복)될 만큼 반복 = 미해결 잔존.</div></div>
+      <div class="i-section"><div class="i-section-label">비즈니스 의미</div><div class="i-section-body">2026.1 CBAM 시행으로 신고 실무(기한·양식·비용) 문의 급증. 신고 기한 알림 + EU 양식 사전 검증이 없으면 고가치 OEM 이탈 직결. 신고 FAQ·가이드 선제 배포 필요.</div></div>
+    </div>
+    <div class="insight-card" style="border-left:4px solid var(--slate)">
+      <div class="i-num" style="color:var(--slate)">인사이트 02</div>
+      <div class="i-title">협력사 1차 데이터 수집 병목이 최대 미충족 니즈 — 자동화 ROI는 이미 입증</div>
+      <div class="i-section"><div class="i-section-label">근거</div><div class="i-section-body">협력사 수집·자동화 요청 008·018·023 + Scope3 계산 005·033. 반대로 자동화 도입 후 만족 034(업무 50% 단축)·039 — ROI 실증.</div></div>
+      <div class="i-section"><div class="i-section-label">비즈니스 의미</div><div class="i-section-body">CSRD Scope3 데이터 제공 요구와 CBAM 내재량 산정이 겹치며 협력사 데이터 수집이 공통 통증점. 협력사 온보딩·일괄 수집 자동화가 최우선 투자처. 034를 세일즈 레퍼런스로 전환.</div></div>
+    </div>
+    <div class="insight-card" style="border-left:4px solid var(--amber)">
+      <div class="i-num" style="color:var(--amber)">인사이트 03</div>
+      <div class="i-title">계산 정확도·검증 가능성 요구 반복 — 법적 보고에서 신뢰 = 계약유지 리스크</div>
+      <div class="i-section"><div class="i-section-label">근거</div><div class="i-section-body">수치 불신·검증 요구 014(20% 차이)·033(30% 차이)·019(GWP 미반영)·002(Scope2 급변) + 검증 연계 문의 015·040. 반례 024(오류 감소 만족) → 이슈는 검증 가능성 부족.</div></div>
+      <div class="i-section"><div class="i-section-label">비즈니스 의미</div><div class="i-section-body">CSRD 제3자 검증·CBAM 내재량 보고는 법적 효력 → 근거 불투명 = 법적 리스크. 계산 로직·배출계수 출처 표시, GWP 자동 업데이트, ISO14064·인증기관 양식 연계가 신뢰 방어의 핵심.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 주간 리포트 ===== -->
+<div class="header" style="margin-top:52px;">
+  <h1>주간 VoC 리포트</h1>
+  <div class="header-meta">
+    <span>2026-05-25 ~ 05-31 (ISO 22주차)</span>
+    <span>수신 CS팀·제품팀</span>
+  </div>
+</div>
+
+<!-- 핵심 KPI -->
+<div class="section">
+  <div class="section-title">핵심 KPI &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">(괄호 = 전주 대비 증감)</span></div>
+  <div class="kpi-row">
+    <div class="kpi total">
+      <div class="kpi-label">전체 VoC</div>
+      <div class="kpi-val">7<span>건</span></div>
+      <div class="kpi-delta flat">− 0</div>
+    </div>
+    <div class="kpi ask">
+      <div class="kpi-label">일반 문의</div>
+      <div class="kpi-val">2<span>건</span></div>
+      <div class="kpi-delta up">▲ +2</div>
+    </div>
+    <div class="kpi feat">
+      <div class="kpi-label">기능 요청</div>
+      <div class="kpi-val">1<span>건</span></div>
+      <div class="kpi-delta down">▼ −3</div>
+    </div>
+    <div class="kpi praise">
+      <div class="kpi-label">칭찬</div>
+      <div class="kpi-val">2<span>건</span></div>
+      <div class="kpi-delta flat">− 0</div>
+    </div>
+    <div class="kpi compl">
+      <div class="kpi-label">불만</div>
+      <div class="kpi-val">2<span>건</span></div>
+      <div class="kpi-delta up">▲ +1</div>
+    </div>
+  </div>
+</div>
+
+<!-- 해결율 -->
+<div class="section">
+  <div class="section-title">해결율 &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">(VoC 처리 완료 지표)</span></div>
+  <div class="res-wrap">
+    <div class="res-figure">
+      <div class="res-pct">71.4%</div>
+      <div class="res-cap">해결 5건 / 전체 7건</div>
+    </div>
+    <div class="res-bar-area">
+      <div class="res-bar">
+        <div class="res-seg res-done" style="width:71.4%">해결 5건</div>
+        <div class="res-seg res-prog" style="width:28.6%">진행 2건</div>
+      </div>
+      <div class="res-legend">
+        <span><i style="background:var(--green)"></i>해결 완료 5건</span>
+        <span><i style="background:var(--amber)"></i>진행 중 2건</span>
+      </div>
+      <div class="res-wow">전주 <b>85.7%</b> → 이번 주 <b>71.4%</b> &nbsp;<span class="down" style="font-weight:700;">▼ −14.3%p</span></div>
+    </div>
+  </div>
+
+  <div class="res-sub-title">유형별 해결율</div>
+  <div class="res-type-row">
+    <div class="kpi ask">
+      <div class="kpi-label">일반 문의</div>
+      <div class="kpi-val">100<span>%</span></div>
+      <div class="res-frac">2 / 2 해결</div>
+    </div>
+    <div class="kpi feat">
+      <div class="kpi-label">기능 요청</div>
+      <div class="kpi-val">100<span>%</span></div>
+      <div class="res-frac">1 / 1 해결</div>
+    </div>
+    <div class="kpi praise">
+      <div class="kpi-label">칭찬</div>
+      <div class="kpi-val">100<span>%</span></div>
+      <div class="res-frac">2 / 2 해결</div>
+    </div>
+    <div class="kpi compl">
+      <div class="kpi-label">불만</div>
+      <div class="kpi-val" style="color:var(--red)">0<span>%</span></div>
+      <div class="res-frac">0 / 2 해결 · 진행 중</div>
+    </div>
+  </div>
+</div>
+
+<!-- 즉시 대응 목록 -->
+<div class="section">
+  <div class="section-title">즉시 대응 목록</div>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>id</th><th>customer_type</th><th>내용 요약</th><th>긴급도</th><th>권장 대응 (SLA)</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>026</td>
+        <td><span class="ct ct-etc">기타</span></td>
+        <td>API·ERP 연동 하루 2~3회 끊김</td>
+        <td><span class="urg">긴급</span></td>
+        <td>개발팀 즉시 전달, 임시 수동 복구 안내 (24h)</td>
+      </tr>
+      <tr>
+        <td>027</td>
+        <td><span class="ct ct-1">1차 협력사</span></td>
+        <td>ISO 14064 데이터 내보내기 오류</td>
+        <td><span class="mid">중간</span></td>
+        <td>인증기관 양식 확인 후 회신 (3영업일)</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="section-note">기준: 이번 주 <b>불만</b> + <b>긴급도</b> 건. SLA = 긴급 24h / 중간 3영업일.</div>
+</div>
+
+<!-- 반복 요청 TOP3 -->
+<div class="section">
+  <div class="section-title">반복 요청 TOP3 &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">(누적 ~05-31, 부가 신호 포함)</span></div>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>순위</th><th>요청 주제</th><th>누적 건수</th><th>대표 VoC</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="rank">1위</td>
+        <td>협력사 데이터 일괄 수집·자동화</td>
+        <td class="cnt">3건</td>
+        <td class="idref">008 · 018 · 023</td>
+      </tr>
+      <tr>
+        <td class="rank">2위</td>
+        <td>규제 대응 가이드·지원 자료 (Scope3·CBAM·CSRD)</td>
+        <td class="cnt">3건</td>
+        <td class="idref">005 · 006 · 013</td>
+      </tr>
+      <tr>
+        <td class="rank">3위</td>
+        <td>보고서 자동 생성·통합·비교</td>
+        <td class="cnt">2건</td>
+        <td class="idref">022 · 029</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="section-note">1회성 요청보다 <b>누적 반복 빈도</b>가 우선순위 신호. 부가 신호(불만 속 잠재 기능 니즈)까지 합산해 실제 수요 크기를 포착.</div>
+</div>
+
+<!-- 탄소규제 신규 패턴 -->
+<div class="section">
+  <div class="section-title">탄소규제 신규 패턴</div>
+  <div class="pat-grid">
+    <div class="pat-card" style="border-left-color:var(--slate)">
+      <div class="pat-tag">CBAM · 025 · OEM</div>
+      <div class="pat-title">CBAM 내재량 제출 실무 문의</div>
+      <div class="pat-body">제출 형식·표준 양식을 함께 물음(다중질문). 2026년 CBAM 시행 임박에 따른 제출 실무 수요 신호 → <b>제출 양식 가이드 선제 배포</b> 검토.</div>
+    </div>
+    <div class="pat-card" style="border-left-color:var(--red)">
+      <div class="pat-tag">CSRD · 030</div>
+      <div class="pat-title">CSRD 감사법인 간 해석차</div>
+      <div class="pat-body">감사법인마다 해석이 달라 "공식 입장"을 요구. 규제 해석 표준화·근거 문서화 니즈 → <b>CS FAQ + 제품 내 근거 표기</b>로 대응.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 제품 개선 기획안 ===== -->
+<div class="header" style="margin-top:52px;">
+  <h1>제품 개선 기획안</h1>
+  <div class="header-meta">
+    <span>우선순위 판단 기준 설계 + 기획안 2건</span>
+    <span>수신 제품팀·경영</span>
+  </div>
+</div>
+
+<!-- 우선순위 판단 기준 -->
+<div class="section">
+  <div class="section-title">우선순위 판단 기준</div>
+  <p class="lead">3축 100점 루브릭. 각 축을 기획안 목적과 1:1로 연결했다. 빈도(1차 신호)에 최고 배점을 두되, 이탈 위험(축2)·매출 규모(축3)를 함께 반영해 <b>"반복되면서, 이탈 위험이 크고, 큰 고객이 겪는"</b> 문제를 최상단으로 끌어올린다.</p>
+  <div class="axis-grid">
+    <div class="axis-card a1">
+      <div class="axis-top"><span class="axis-tag">축 1</span><span class="axis-pts">40<span>점</span></span></div>
+      <div class="axis-name">누적 반복 빈도</div>
+      <div class="axis-desc">동일 문제가 몇 건 반복되는가 = 미해결 GAP의 폭</div>
+      <div class="axis-goal">목적 · 제품 로드맵 근거</div>
+    </div>
+    <div class="axis-card a2">
+      <div class="axis-top"><span class="axis-tag">축 2</span><span class="axis-pts">30<span>점</span></span></div>
+      <div class="axis-name">부가 신호 강도</div>
+      <div class="axis-desc">불만·부정 표현·긴급·재유입 = 이탈 위험의 세기</div>
+      <div class="axis-goal">목적 · 이탈 예방 / 규제 조기 감지</div>
+    </div>
+    <div class="axis-card a3">
+      <div class="axis-top"><span class="axis-tag">축 3</span><span class="axis-pts">30<span>점</span></span></div>
+      <div class="axis-name">거래처 매출 규모</div>
+      <div class="axis-desc">누가 제기하는가 = 위협받는 ARR 규모</div>
+      <div class="axis-goal">목적 · 이탈 예방</div>
+    </div>
+  </div>
+
+  <div class="scoring">
+    <div class="scoring-title">채점 규칙 (재현 가능)</div>
+    <div class="scoring-row">
+      <span class="sc-axis a1">축1</span>
+      <span class="sc-rule">테마 매핑 VoC 수 — <b>1건 10 · 2건 20 · 3건 30 · 4건 이상 40</b></span>
+    </div>
+    <div class="scoring-row">
+      <span class="sc-axis a2">축2</span>
+      <span class="sc-rule">VoC별 최고 신호 1개 — <b>긴급 10 · 불만 8 · secondary 불만·부정 표현 5 · 순수 요청·문의 0</b>, 미해결 재유입·중복 재발 <b>+6</b> (상한 30)</span>
+    </div>
+    <div class="scoring-row">
+      <span class="sc-axis a3">축3</span>
+      <span class="sc-rule">거래처 유형별 배점 차등 — <b>OEM 10 · 1차 협력사 7 · 2차 협력사 4 · 기타 2</b> (상한 30)</span>
+    </div>
+    <div class="tier-row">
+      <span class="tier-item"><span class="badge b-p0">P0</span> 75점 이상</span>
+      <span class="tier-item"><span class="badge b-p1">P1</span> 60–74점</span>
+      <span class="tier-item"><span class="badge b-p2">P2</span> 60점 미만</span>
+    </div>
+  </div>
+
+  <div class="section-note"><b>선정 규칙 (단일 실행성)</b> — 기획안은 단일하게 실행 가능한 개선 단위여야 한다. 이질적 기능이 다수 묶인 광범위 테마는 빈도축이 과대 계상되므로 분해 후 로드맵으로 이관한다.</div>
+</div>
+
+<!-- 전체 후보 랭킹 -->
+<div class="section">
+  <div class="section-title">전체 후보 랭킹 &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">(44건 → 6개 테마 재매핑 채점)</span></div>
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>순위</th><th>테마</th><th>축1</th><th>축2</th><th>축3</th><th>총점</th><th>티어</th><th>채택</th></tr></thead>
+    <tbody>
+      <tr class="picked">
+        <td class="rank">1</td>
+        <td>CBAM 규제 신고·제출 실무 완결성</td>
+        <td class="ax">40</td><td class="ax">26</td><td class="ax">30</td>
+        <td class="rank-total"><div class="rt-num" style="color:var(--red-strong)">96</div><div class="rt-track"><div class="rt-fill" style="width:96%;background:var(--red)"></div></div></td>
+        <td><span class="badge b-p0">P0</span></td>
+        <td><span class="adopt">기획안 1</span></td>
+      </tr>
+      <tr>
+        <td class="rank">2</td>
+        <td>보고서·프레임워크 통합 유연성</td>
+        <td class="ax">40</td><td class="ax">20</td><td class="ax">30</td>
+        <td class="rank-total"><div class="rt-num" style="color:var(--red-strong)">90</div><div class="rt-track"><div class="rt-fill" style="width:90%;background:var(--red)"></div></div></td>
+        <td><span class="badge b-p0">P0</span></td>
+        <td><span class="route">로드맵 이관¹</span></td>
+      </tr>
+      <tr class="picked">
+        <td class="rank">3</td>
+        <td>공급망 Scope3 데이터 수집 자동화</td>
+        <td class="ax">40</td><td class="ax">18</td><td class="ax">23</td>
+        <td class="rank-total"><div class="rt-num" style="color:var(--red-strong)">81</div><div class="rt-track"><div class="rt-fill" style="width:81%;background:var(--red)"></div></div></td>
+        <td><span class="badge b-p0">P0</span></td>
+        <td><span class="adopt">기획안 2</span></td>
+      </tr>
+      <tr>
+        <td class="rank">4</td>
+        <td>계산 정확도·산정 로직 투명성</td>
+        <td class="ax">40</td><td class="ax">23</td><td class="ax">14</td>
+        <td class="rank-total"><div class="rt-num" style="color:var(--red-strong)">77</div><div class="rt-track"><div class="rt-fill" style="width:77%;background:var(--red)"></div></div></td>
+        <td><span class="badge b-p0">P0</span></td>
+        <td><span class="route">후속 3순위</span></td>
+      </tr>
+      <tr>
+        <td class="rank">5</td>
+        <td>플랫폼 안정성·시스템 연동</td>
+        <td class="ax">30</td><td class="ax">28</td><td class="ax">13</td>
+        <td class="rank-total"><div class="rt-num" style="color:var(--amber-strong)">71</div><div class="rt-track"><div class="rt-fill" style="width:71%;background:var(--amber)"></div></div></td>
+        <td><span class="badge b-p1">P1</span></td>
+        <td><span class="route">상시 CS SLA</span></td>
+      </tr>
+      <tr>
+        <td class="rank">6</td>
+        <td>규제·방법론 인플랫폼 가이드</td>
+        <td class="ax">30</td><td class="ax">15</td><td class="ax">11</td>
+        <td class="rank-total"><div class="rt-num" style="color:var(--text-3)">56</div><div class="rt-track"><div class="rt-fill" style="width:56%;background:var(--neutral)"></div></div></td>
+        <td><span class="badge b-p2">P2</span></td>
+        <td><span class="route">콘텐츠 백로그</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="section-note"><b>¹ 2위(90점)</b>는 CSRD 이중중요성·TCFD 통합·차트·크레딧 표시·분기 자동생성·SBTi·커스터마이징 등 <b>이질적 기능 7건</b>의 묶음 → 단일 기획안 부적합(분해 시 각 ≤64점). '리포팅 2.0' 에픽으로 로드맵 이관. 따라서 <b>단일 실행 단위 기준 상위 2건(CBAM 96, 공급망 81)</b>을 기획안으로 채택.</div>
+</div>
+
+<!-- 기획안 카드 -->
+<div class="section">
+  <div class="section-title">제품 개선 기획안 2건</div>
+
+  <!-- 기획안 1 -->
+  <div class="proposal">
+    <div class="proposal-head p0">
+      <div class="prop-meta">
+        <div class="prop-num">기획안 01</div>
+        <div class="prop-title">CBAM 신고·제출 실무 완결성</div>
+        <div class="prop-sub">기한 알림 + 반려 예방 + 제출 추적 — 상위 고객의 CBAM 사후 대응 케이스 반복 해소</div>
+      </div>
+      <div class="pb pb-p0">
+        <div class="pb-label">Priority</div>
+        <div class="pb-tier">P0</div>
+        <div class="pb-score">96 / 100</div>
+      </div>
+    </div>
+    <div class="proposal-body">
+      <div class="prop-col">
+        <div class="prop-block">
+          <div class="prop-block-title">문제 정의</div>
+          <div class="prop-block-body">카본링크는 CBAM 보고서를 <b>생성</b>해 주지만, 이후 <b>신고 기한 관리 → EU 양식 검증 → 세관 제출·수리</b>는 고객 몫이다. 2026년 1월 CBAM 확정 시행으로 상위 고객(OEM·1차)이 <b>마감 초과·EU 세관 반려</b>를 반복 → 수출 계약 위험 = 최고가치 고객 이탈 위험으로 직결.</div>
+        </div>
+        <div class="prop-block">
+          <div class="prop-block-title">근거 VoC</div>
+          <div class="voc-item urg-i"><span class="vid">010</span><span class="ct ct-oem">OEM</span><span class="sig sig-urg">긴급</span> CBAM 보고서 EU 세관 반려 — 생성물·EU 양식 불일치</div>
+          <div class="voc-item urg-i"><span class="vid">045</span><span class="ct ct-oem">OEM</span><span class="sig sig-urg">긴급</span> 신고 마감 초과 — 수출 계약 위험</div>
+          <div class="voc-item"><span class="vid">001·031</span><span class="ct ct-1">1차</span><span class="sig sig-re">재유입</span> 신고 기한 문의 — 031로 동일 재유입 = 미해결 잔존</div>
+          <div class="voc-cluster">실무 문의 클러스터 — 016 구매의무·비용 · 025 내재량 제출형식 · 032 권한이전 · 036 공공조달 · 041 단가추산</div>
+        </div>
+      </div>
+      <div class="prop-col">
+        <div class="prop-block">
+          <div class="prop-block-title">개선 제안</div>
+          <ol class="prop-steps">
+            <li><span class="n">①</span>CBAM 신고 캘린더 + <b>D-30 / 7 / 1</b> 자동 알림</li>
+            <li><span class="n">②</span>제출 전 EU 최신 양식 <b>사전 검증</b>(반려 예방)</li>
+            <li><span class="n">③</span><b>생성 → 검증 → 제출 → 수리</b> 상태 추적 보드</li>
+            <li><span class="n">④</span>EU-ETS 연동 인증서 <b>비용 추산기</b></li>
+          </ol>
+        </div>
+        <div class="prop-block">
+          <div class="prop-block-title">우선순위 점수</div>
+          <div class="score-breakdown">
+            <div class="score-row">
+              <span class="score-label">축1 반복 빈도</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--slate)"></div></div>
+              <span class="score-val">40/40</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">축2 부가 신호</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:86.7%;background:var(--red)"></div></div>
+              <span class="score-val">26/30</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">축3 매출 규모</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--green)"></div></div>
+              <span class="score-val">30/30</span>
+            </div>
+            <div class="score-row total">
+              <span class="score-label">총점</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:96%;background:var(--red-strong)"></div></div>
+              <span class="score-val" style="color:var(--red-strong)">96/100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기획안 2 -->
+  <div class="proposal">
+    <div class="proposal-head p0">
+      <div class="prop-meta">
+        <div class="prop-num">기획안 02</div>
+        <div class="prop-title">공급망 Scope3 협력사 데이터 수집 자동화</div>
+        <div class="prop-sub">일괄 발송 + 무계정 입력 폼 + 응답 추적 — 수백 개 하위 협력사 수동 수집 병목 해소</div>
+      </div>
+      <div class="pb pb-p0">
+        <div class="pb-label">Priority</div>
+        <div class="pb-tier">P0</div>
+        <div class="pb-score">81 / 100</div>
+      </div>
+    </div>
+    <div class="proposal-body">
+      <div class="prop-col">
+        <div class="prop-block">
+          <div class="prop-block-title">문제 정의</div>
+          <div class="prop-block-body">CSRD Scope3 의무 + CBAM 내재량 산정이 겹쳐 OEM·1차가 <b>수백 개 하위 협력사 데이터</b>를 수동 입력/개별 링크로 수집한다. 협력사 200개 기준 <b>주당 수십 시간</b>·미응답 시 누락. 반대로 자동화 도입 고객은 <b>업무시간 절반 단축</b>(ROI 실증).</div>
+        </div>
+        <div class="prop-block">
+          <div class="prop-block-title">근거 VoC</div>
+          <div class="voc-item"><span class="vid">008</span><span class="ct ct-oem">OEM</span><span class="sig sig-comp">불만</span> 협력사 200개 수동 입력 — 대량 입력 병목</div>
+          <div class="voc-item"><span class="vid">018</span><span class="ct ct-etc">기타</span><span class="sig sig-comp">부정 표현</span> 일괄 발송 부재 — 개별 링크 전송이 번거로움</div>
+          <div class="voc-item"><span class="vid">023</span><span class="ct ct-1">1차</span><span class="sig sig-comp">부정 표현</span> 협력사 협조 안 함 — 공문·요청 템플릿 요청</div>
+          <div class="voc-item roi-i"><span class="vid">034</span><span class="ct ct-2">2차</span><span class="sig sig-roi">ROI 반례</span> 수집 자동화 도입 후 업무시간 절반 단축</div>
+        </div>
+      </div>
+      <div class="prop-col">
+        <div class="prop-block">
+          <div class="prop-block-title">개선 제안</div>
+          <ol class="prop-steps">
+            <li><span class="n">①</span>협력사 리스트 업로드 → 요청 <b>일괄 발송</b></li>
+            <li><span class="n">②</span>협력사용 <b>무계정 간이 입력 폼</b></li>
+            <li><span class="n">③</span>응답률·미응답 <b>실시간 추적 + 자동 리마인드</b></li>
+            <li><span class="n">④</span>공문·요청 <b>템플릿 내장</b></li>
+          </ol>
+        </div>
+        <div class="prop-block">
+          <div class="prop-block-title">우선순위 점수</div>
+          <div class="score-breakdown">
+            <div class="score-row">
+              <span class="score-label">축1 반복 빈도</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:100%;background:var(--slate)"></div></div>
+              <span class="score-val">40/40</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">축2 부가 신호</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:60%;background:var(--red)"></div></div>
+              <span class="score-val">18/30</span>
+            </div>
+            <div class="score-row">
+              <span class="score-label">축3 매출 규모</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:76.7%;background:var(--green)"></div></div>
+              <span class="score-val">23/30</span>
+            </div>
+            <div class="score-row total">
+              <span class="score-label">총점</span>
+              <div class="score-bar-track"><div class="score-bar-fill" style="width:81%;background:var(--red-strong)"></div></div>
+              <span class="score-val" style="color:var(--red-strong)">81/100</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-note">두 기획안이 인용한 모든 VoC id의 <b>customer_type·유형·원문 인용</b>을 <b>voc-classification.csv</b>·<b>data/voc.csv</b>와 대조 → 날조·오귀속 0건. 023은 산출물이 데이터 수집 기능이므로 기획안 2에 귀속(기획안 1과 이중계상 회피).</div>
+</div>
+
+</div>
+<script>
+var vtFilter = 'all';
+var vtExpanded = false;
+var VT_LIMIT = 10;
+
+function vtMatch(r, type) {
+  if (type === 'all') return true;
+  if (type === 'urg') return r.dataset.urg === '1';
+  if (type === 'mq') return r.dataset.mq === '1';
+  return r.dataset.t === type;
+}
+
+function vtRender() {
+  var matched = 0;
+  document.querySelectorAll('#vt tbody tr').forEach(function(r){
+    if (!vtMatch(r, vtFilter)) { r.style.display = 'none'; return; }
+    matched++;
+    r.style.display = (!vtExpanded && matched > VT_LIMIT) ? 'none' : '';
+  });
+  var btn = document.getElementById('moreBtn');
+  if (matched > VT_LIMIT) {
+    btn.style.display = '';
+    btn.textContent = vtExpanded ? '접기' : ('더보기 (+' + (matched - VT_LIMIT) + '건)');
+  } else {
+    btn.style.display = 'none';
+  }
+}
+
+function ft(type, btn) {
+  vtFilter = type;
+  vtExpanded = false;
+  document.querySelectorAll('.f-btn').forEach(function(b){ b.classList.remove('on'); });
+  btn.classList.add('on');
+  vtRender();
+}
+
+function toggleMore() {
+  vtExpanded = !vtExpanded;
+  vtRender();
+}
+
+vtRender();
+</script>
+</body>
+</html>
