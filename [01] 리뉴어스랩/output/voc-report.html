@@ -285,6 +285,14 @@ tr.picked:hover { background: var(--green-tint-3); }
   .res-type-row { grid-template-columns: repeat(2, 1fr); }
   .pat-grid { grid-template-columns: 1fr; }
 }
+@media print {
+  /* 카드형 블록이 페이지 경계에서 쪼개져 머리글만 남고 본문이 다음 페이지로
+     넘어가며 빈 여백이 생기는 문제 방지 — 표(.tbl-wrap)는 의도적으로 제외 */
+  .proposal, .insight-card, .mini, .axis-card, .header, .prop-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
 </style>
 </head>
 <body>
@@ -429,9 +437,9 @@ tr.picked:hover { background: var(--green-tint-3); }
   </div>
 </div>
 
-<!-- 핵심 KPI -->
+<!-- KPI -->
 <div class="section">
-  <div class="section-title">핵심 KPI &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">(괄호 = 전주 대비 증감)</span></div>
+  <div class="section-title">KPI &nbsp;<span style="font-size:12px;font-weight:500;color:var(--muted);">(건수 아래 전주 대비 증감)</span></div>
   <div class="kpi-row">
     <div class="kpi total">
       <div class="kpi-label">전체 VoC</div>
@@ -531,7 +539,7 @@ tr.picked:hover { background: var(--green-tint-3); }
     </tbody>
   </table>
   </div>
-  <div class="section-note">기준: 이번 주 <b>불만</b> + <b>긴급도</b> 건. SLA = 긴급 24h / 중간 3영업일.</div>
+  <div class="section-note">기준: 이번 주 <b>불만</b> + <b>긴급도</b> 건. SLA : 긴급 24h / 중간 3영업일.</div>
 </div>
 
 <!-- 반복 요청 TOP3 -->
@@ -587,7 +595,7 @@ tr.picked:hover { background: var(--green-tint-3); }
   <h1>제품 개선 기획안</h1>
   <div class="header-meta">
     <span>우선순위 판단 기준 설계 + 기획안 2건</span>
-    <span>수신 제품팀·경영</span>
+    <span>수신 제품팀</span>
   </div>
 </div>
 
